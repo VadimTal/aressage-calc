@@ -13,25 +13,25 @@ col_left, col_right = st.columns([1, 1.2])
 with col_left:
     st.header("🎛️ Интерактивная панель")
     
-    with st.expansions("👤 1. Поток клиентов и Цены"):
+    with st.expander("👤 1. Поток клиентов и Цены"):
         clients_face = st.slider("Процедур 'Лицо/Тело' в день", 0, 10, 3)
         price_face = st.slider("Цена 'Лицо/Тело' для гостя (руб.)", 5000, 15000, 9300, step=100)
         clients_hair = st.slider("Процедур 'Волосы' в день", 0, 10, 3)
         price_hair = st.slider("Цена 'Волосы' для гостя (руб.)", 5000, 15000, 11300, step=100)
         days = st.slider("Рабочих дней кабинета в месяце", 15, 30, 22)
 
-    with st.expansions("🧪 2. Переменные расходы (на 1 процедуру)"):
+    with st.expander("🧪 2. Переменные расходы (на 1 процедуру)"):
         cost_face = st.slider("Расходники: состав Лицо/Тело (руб.)", 1500, 6000, 3100, step=50)
         cost_hair = st.slider("Расходники: состав Волосы (руб.)", 1500, 6000, 3766, step=50)
         manipula = st.slider("Амортизация манипулы/насадки (руб.)", 0, 1000, 425, step=25)
 
-    with st.expansions("📉 3. Инвестиции и Лизинг"):
+    with st.expander("📉 3. Инвестиции и Лизинг"):
         lease_payment = st.number_input("Месячный платеж по лизингу аппарата (руб.)", value=33333)
         lease_percent = st.number_input("Проценты по лизингу в месяц (руб.)", value=4000)
         lease_months = st.slider("Срок лизинга (месяцев)", 6, 36, 12)
         initial_invest = st.number_input("Стартовый закуп составов/обучение (руб.)", value=150000)
 
-    with st.expansions("🏢 4. Фиксированные расходы в месяц"):
+    with st.expander("🏢 4. Фиксированные расходы в месяц"):
         salary_base = st.number_input("Оклад мастера/медсестры (руб.)", value=40000)
         salary_tax = st.number_input("Налоги на ФОТ (руб.)", value=20800)
         bonus_doctor = st.number_input("Премия врача / Мотивация (руб.)", value=80000)
