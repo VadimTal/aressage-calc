@@ -112,7 +112,7 @@ with c_graph1:
             "Сумма (руб.)": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax]
         })
         brand_luxury_colors = ['#4A1A60', '#005A36', '#1A1A1A', '#8E5EA2']
-        fig_pie = px.pie(pie_data, values="Сумma (руб.)", names="Категория", 
+        fig_pie = px.pie(pie_data, values="Сумма (руб.)", names="Категория", 
                          color_discrete_sequence=brand_luxury_colors, hole=0.45)
         fig_pie.update_layout(margin=dict(t=5, b=5, l=0, r=0), height=170, showlegend=True)
         st.plotly_chart(fig_pie, use_container_width=True)
