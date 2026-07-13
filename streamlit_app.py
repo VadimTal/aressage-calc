@@ -1,95 +1,112 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import numpy as np
 
-st.set_page_config(page_title="ФинПлан ARESSAGE PRO 2.0", layout="wide")
+# Настройка страницы на широкий формат
+st.set_page_config(page_title="ФинПлан ARESSAGE PRO", layout="wide", initial_sidebar_state="collapsed")
 
-st.title("📊 Комплексный финансовый план ARESSAGE PRO")
-st.write("Настройте параметры ниже, чтобы увидеть полную структуру расходов, налогов и динамику прибыли.")
+# Компактный заголовок
+st.markdown("<h2 style='text-align: center; margin-bottom: 20px;'>📊 Финансовая модель ARESSAGE PRO для УК Санаториев</h2>", unsafe_allow_html=True)
 
-# Разделение экрана на две колонки: слева настройки, справа графики и цифры
-col_left, col_right = st.columns([1, 1.2])
+# Входные параметры распределяем в 4 компактные колонки (вместо длинных списков)
+c_in1, c_in2, c_in3, c_in4 = st.columns(4)
 
-with col_left:
-    st.header("🎛️ Интерактивная панель")
-    
-    with st.expander("👤 1. Поток клиентов и Цены"):
-        clients_face = st.slider("Процедур 'Лицо/Тело' в день", 0, 10, 3)
-        price_face = st.slider("Цена 'Лицо/Тело' для гостя (руб.)", 5000, 15000, 9300, step=100)
-        clients_hair = st.slider("Процедур 'Волосы' в день", 0, 10, 3)
-        price_hair = st.slider("Цена 'Волосы' для гостя (руб.)", 5000, 15000, 11300, step=100)
-        days = st.slider("Рабочих дней кабинета в месяце", 15, 30, 22)
+with c_in1:
+    st.markdown("**👤 Поток и Цены**")
+    clients_face = st.slider("Лицо/Тело в день", 0, 10, 3)
+    price_face = st.slider("Цена Лицо/Тело (руб.)", 5000, 15000, 9300, step=100)
+    clients_hair = st.slider("Волосы в день", 0, 10, 3)
+    price_hair = st.slider("Цена Волосы (руб.)", 5000, 15000, 11300, step=100)
+    days = st.slider("Рабочих дней в мес.", 15, 30, 22)
 
-    with st.expander("🧪 2. Переменные расходы (на 1 процедуру)"):
-        cost_face = st.slider("Расходники: состав Лицо/Тело (руб.)", 1500, 6000, 3100, step=50)
-        cost_hair = st.slider("Расходники: состав Волосы (руб.)", 1500, 6000, 3766, step=50)
-        manipula = st.slider("Амортизация манипулы/насадки (руб.)", 0, 1000, 425, step=25)
+with c_in2:
+    st.markdown("**🧪 Себестоимость сеанса**")
+    cost_face = st.slider("Состав Лицо/Тело (руб.)", 1500, 6000, 3100, step=50)
+    cost_hair = st.slider("Состав Волосы (руб.)", 1500, 6000, 3766, step=50)
+    manipula = st.slider("Манипула/Насадка (руб.)", 0, 1000, 425, step=25)
 
-    with st.expander("📉 3. Инвестиции и Лизинг"):
-        lease_payment = st.number_input("Месячный платеж по лизингу аппарата (руб.)", value=33333)
-        lease_percent = st.number_input("Проценты по лизингу в месяц (руб.)", value=4000)
-        lease_months = st.slider("Срок лизинга (месяцев)", 6, 36, 12)
-        initial_invest = st.number_input("Стартовый закуп составов/обучение (руб.)", value=150000)
+with c_in3:
+    st.markdown("**📉 Оборудование и Лизинг**")
+    device_cost = st.number_input("Стоимость аппарата (руб.)", value=1200000, step=50000)
+    lease_rate = st.number_input("Лизинговая ставка (%)", value=15.0, step=0.5)
+    lease_months = st.slider("Срок лизинга (мес.)", 6, 36, 12)
+    initial_invest = st.number_input("Старт (закуп/обучение), руб.", value=150000, step=10000)
 
-    with st.expander("🏢 4. Фиксированные расходы в месяц"):
-        salary_base = st.number_input("Оклад мастера/медсестры (руб.)", value=40000)
-        salary_tax = st.number_input("Налоги на ФОТ (руб.)", value=20800)
-        bonus_doctor = st.number_input("Премия врача / Мотивация (руб.)", value=80000)
-        rent_and_other = st.number_input("Аренда и общехозяйственные расходы (руб.)", value=35000)
+with c_in4:
+    st.markdown("**🏢 Фикс. расходы в месяц**")
+    salary_base = st.number_input("Оклад мастера (руб.)", value=40000)
+    salary_tax = st.number_input("Налоги на ФОТ (руб.)", value=20800)
+    bonus_doctor = st.number_input("Премия / Мотивация (руб.)", value=80000)
+    rent_and_other = st.number_input("Аренда и общехозяйственные (руб.)", value=35000)
 
-# Математические расчеты (Логика вашей Excel-модели)
+# --- МАТЕМАТИЧЕСКАЯ ЛОГИКА ---
+# Расчет ежемесячного платежа по лизингу (Формула аннуитета)
+if lease_rate > 0 and lease_months > 0:
+    monthly_rate = (lease_rate / 100) / 12
+    lease_payment = device_cost * (monthly_rate * (1 + monthly_rate)**lease_months) / ((1 + monthly_rate)**lease_months - 1)
+else:
+    lease_payment = device_cost / lease_months if lease_months > 0 else 0
+
+# Выручка
 monthly_face_rev = clients_face * days * price_face
 monthly_hair_rev = clients_hair * days * price_hair
 total_revenue = monthly_face_rev + monthly_hair_rev
 
-# Общие переменные за месяц
-total_cost_face = clients_face * days * (cost_face + manipula)
-total_cost_hair = clients_hair * days * (cost_hair + manipula)
-total_variable_costs = total_cost_face + total_cost_hair
+# Переменные расходы за месяц
+total_variable_costs = (clients_face * days * (cost_face + manipula)) + (clients_hair * days * (cost_hair + manipula))
 
-# Общие фиксированные за месяц
-total_fixed_costs = lease_payment + lease_percent + salary_base + salary_tax + bonus_doctor + rent_and_other
+# Общие фиксированные расходы (с учетом расчетного лизинга)
+total_fixed_costs = lease_payment + salary_base + salary_tax + bonus_doctor + rent_and_other
 
-# Прибыль и налоги
+# Расчет прибыли и налогов
 profit_before_tax = total_revenue - total_variable_costs - total_fixed_costs
 tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
 net_profit = profit_before_tax - tax
 
-# Вывод результатов в правую колонку
-with col_right:
-    st.header("📈 Финансовые результаты")
-    
-    c1, c2 = st.columns(2)
-    c1.metric("Общая выручка в месяц", f"{total_revenue:,.0f} руб.")
-    if net_profit > 0:
-        c2.metric("Чистая прибыль (после налогов 15%)", f"{net_profit:,.0f} руб.", delta_color="normal")
-    else:
-        c2.metric("Чистая прибыль", f"{net_profit:,.0f} руб.", delta_color="inverse")
+st.markdown("<hr style='margin: 10px 0;'>", unsafe_allow_html=True)
 
-    # 1. Круговая диаграмма состава цены (Pie Chart)
-    st.subheader("🍕 Структура распределения выручки")
+# Главные финансовые метрики в одну строку
+c_m1, c_m2, c_m3 = st.columns(3)
+c_m1.metric("📌 Общая выручка в месяц", f"{total_revenue:,.0f} руб.")
+c_m2.metric("📌 Расчетный платеж по лизингу", f"{lease_payment:,.0f} руб./мес.")
+if net_profit > 0:
+    c_m3.metric("🟢 Чистая прибыль (налог 15%)", f"{net_profit:,.0f} руб.")
+else:
+    c_m3.metric("🔴 Чистый убыток проекта", f"{net_profit:,.0f} руб.")
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Блок графиков: делим экран 50/50 по горизонтали
+c_graph1, c_graph2 = st.columns(2)
+
+with c_graph1:
+    st.markdown("<b style='font-size:14px;'>🪐 Структура распределения доходов</b>", unsafe_allow_html=True)
     if total_revenue > 0 and net_profit > 0:
         pie_data = pd.DataFrame({
-            "Категория": ["Чистая прибыль", "Расходники и составы", "Фиксированные расходы + Лизинг", "Налог (15%)"],
+            "Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы + Лизинг", "Налог 15%"],
             "Сумма (руб.)": [net_profit, total_variable_costs, total_fixed_costs, tax]
         })
+        # Премиальная биотех-гамма: Изумрудный, Золотой, Оливковый, Темно-зеленый
+        luxury_colors = ['#004B49', '#D4AF37', '#708238', '#002524']
         fig_pie = px.pie(pie_data, values="Сумма (руб.)", names="Категория", 
-                         color_discrete_sequence=px.colors.sequential.RdBu, hole=0.3)
+                         color_discrete_sequence=luxury_colors, hole=0.4)
+        fig_pie.update_layout(margin=dict(t=0, b=0, l=0, r=0), height=220)
         st.plotly_chart(fig_pie, use_container_width=True)
     else:
-        st.warning("⚠️ Выручка отсутствует или проект в убытке. Круговая диаграмма появится при выходе в прибыль.")
+        st.warning("Круговая диаграмма активируется при выходе проекта в прибыль.")
 
-    # 2. Линейный график динамики по месяцам (Прогноз на полгода)
-    st.subheader("📅 Прогноз баланса и окупаемости проекта (6 месяцев)")
-    months_list = [f"Месяц {i}" for i in range(1, 7)]
+with c_graph2:
+    st.markdown("<b style='font-size:14px;'>📈 Прогноз баланса и окупаемости (6 месяцев)</b>", unsafe_allow_html=True)
+    months_list = [f"Мес. {i}" for i in range(1, 7)]
     cumulative_balances = []
     
-    # Стартуем с минуса (первоначальный закуп)
+    # Стартуем с первоначальных инвестиций
     current_balance = -initial_invest
     
     for m in range(1, 7):
-        # Если лизинг еще выплачивается, вычитаем его, если срок кончился — фиксированные расходы уменьшаются
-        current_fixed = total_fixed_costs if m <= lease_months else (total_fixed_costs - lease_payment - lease_percent)
+        # Если срок лизинга истек, убираем лизинговый платеж из расходов
+        current_fixed = total_fixed_costs if m <= lease_months else (total_fixed_costs - lease_payment)
         m_profit_before_tax = total_revenue - total_variable_costs - current_fixed
         m_tax = m_profit_before_tax * 0.15 if m_profit_before_tax > 0 else 0
         m_net_profit = m_profit_before_tax - m_tax
@@ -97,6 +114,8 @@ with col_right:
         current_balance += m_net_profit
         cumulative_balances.append(current_balance)
         
-    df_line = pd.DataFrame({"Баланс проекта (руб.)": cumulative_balances}, index=months_list)
-    st.line_chart(df_line)
-    st.caption("График учитывает прекращение лизинговых платежей после завершения указанного вами срока лизинга.")
+    df_line = pd.DataFrame({"Баланс (руб.)": cumulative_balances}, index=months_list)
+    # Отображаем компактный график
+    st.line_chart(df_line, height=220)
+
+st.caption("💡 Модель динамически пересчитывает лизинг методом аннуитета и отключает платежи по истечении его срока.")
