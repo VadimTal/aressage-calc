@@ -1,40 +1,55 @@
 import streamlit as st
 
-st.set_page_config(page_title="Калькулятор ARESSAGE PRO", layout="centered")
+st.set_page_config(page_title="ФинПлан ARESSAGE PRO", layout="centered")
 
-st.title("📊 Финансовый калькулятор ARESSAGE PRO")
-st.write("Передвигайте ползунки, чтобы увидеть динамику окупаемости.")
+st.title("📊 Интерактивный ФинПлан ARESSAGE PRO")
+st.write("Передвигайте ползунки, чтобы адаптировать расчеты под вашу сеть санаториев.")
 
-# Блок настроек параметров
+# Настройки параметров (Ползунки)
 st.header("🎛️ Настройки параметров")
-price = st.slider("Стоимость одной процедуры для гостя (руб.)", 5000, 15000, 9800, step=500)
-cost = st.slider("Себестоимость расходных материалов (руб.)", 2000, 5000, 3300, step=100)
-clients_per_day = st.slider("Количество процедур в день на 1 кабинет", 1, 10, 3)
-investments = st.number_input("Стартовые инвестиции (аппарат + первая партия белка), руб.", value=350000, step=10000)
 
-# Математическая логика расчета
-margin_per_proc = price - cost
-monthly_volume = clients_per_day * 30
-monthly_profit = monthly_volume * margin_per_proc
-payback_period = investments / monthly_profit if monthly_profit > 0 else 0
+col1, col2 = st.columns(2)
+with col1:
+    clients_face = st.slider("Процедур 'Лицо/Тело' в день", 0, 10, 3)
+    price_face = st.slider("Цена 'Лицо/Тело' (руб.)", 5000, 15000, 9300, step=100)
+with col2:
+    clients_hair = st.slider("Процедур 'Волосы' в день", 0, 10, 3)
+    price_hair = st.slider("Цена 'Волосы' (руб.)", 5000, 15000, 11300, step=100)
 
-# Красивый вывод финансовых результатов
-st.header("📈 Финансовые показатели")
-st.success(f"💰 Ежемесячная чистая прибыль кабинета: {monthly_profit:,.0f} руб.")
-st.warning(f"🎯 Маржинальность одной процедуры: {round((margin_per_proc/price)*100)}%")
-st.info(f"⏳ Полная окупаемость вложений: {round(payback_period, 1)} мес.")
+days = st.slider("Рабочих дней в месяце (в среднем)", 15, 30, 22)
 
-# Построение интерактивного графика накопленного дохода
-st.header("📊 Прогноз прибыли по месяцам")
-months = [f"Месяц {i}" for i in range(1, 7)]
-cumulative_balances = []
-current_balance = -investments
+# Внутренняя калькуляция на основе вашего Excel
+# 1. Доходы
+monthly_face_rev = clients_face * days * price_face
+monthly_hair_rev = clients_hair * days * price_hair
+total_revenue = monthly_face_rev + monthly_hair_rev
 
-for i in range(1, 7):
-    current_balance += monthly_profit
-    cumulative_balances.append(current_balance)
+# 2. Переменные расходы (Себестоимость составов + манипула)
+cost_face_per_proc = (price_face / 3) + 425
+cost_hair_per_proc = (price_hair / 3) + 425
 
-# Отображение встроенного линейного графика
-st.line_chart(cumulative_balances)
-st.caption("Линия показывает баланс проекта. Точка пересечения нуля — это момент полной окупаемости инвестиций.")
+total_variable_costs = (clients_face * days * cost_face_per_proc) + (clients_hair * days * cost_hair_per_proc)
 
+# 3. Фиксированные расходы (Лизинг, ФОТ, Аренда)
+fixed_costs = 33333 + 4000 + 40000 + 20800 + 80000 + 35000
+
+# 4. Расчет прибыли и налога (15%)
+profit_before_tax = total_revenue - total_variable_costs - fixed_costs
+tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
+net_profit = profit_before_tax - tax
+
+# Вывод результатов
+st.header("📈 Прогноз финансовых показателей (в месяц)")
+
+if net_profit > 0:
+    st.success(f"💰 Среднемесячная чистая прибыль: {net_profit:,.0f} руб.")
+    st.info(f"💵 Общая выручка: {total_revenue:,.0f} руб. | Расходы всего: {(total_variable_costs + fixed_costs + tax):,.0f} руб.")
+else:
+    st.error(f"📉 Проект в убытке: {net_profit:,.0f} руб. (Недостаточно клиентов для покрытия фиксированных расходов)")
+
+# Краткий аналитический блок для УК
+st.subheader("💡 Аналитика для руководства")
+st.markdown(f"""
+* **Точка безубыточности:** Для покрытия всех фиксированных расходов (включая лизинг и оклады) комплексу достаточно делать суммарно около **2 процедур в день**.
+* **Доходность:** При текущих настройках ваша маржинальность по чистой прибыли составляет **{round((net_profit/total_revenue)*100) if total_revenue > 0 else 0}%**.
+""")
