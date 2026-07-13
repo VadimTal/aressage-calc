@@ -53,7 +53,7 @@ with c_in1:
 with c_in2:
     st.markdown("<b style='color:#4A1A60;'>🧪 Себестоимость сеанса</b>", unsafe_allow_html=True)
     cost_face = st.slider("Состав Лицо/Тело (руб.)", 1500, 6000, 3100, step=50)
-    cost_hair = st.slider("Состав Волосы (руб.)", 1500, 6000, 3766, step=50)
+    cost_hair = st.slider("Состав Волосы (руб.)", 1500, 6000, 4000, step=50)
     manipula = st.slider("Манипула/Насадка (руб.)", 0, 1000, 425, step=25)
 
 with c_in3:
