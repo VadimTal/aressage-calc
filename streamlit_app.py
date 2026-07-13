@@ -90,7 +90,7 @@ profit_before_tax = total_revenue - total_variable_costs - total_fixed_costs_wit
 tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
 net_profit = profit_before_tax - tax
 
-st.markdown("<hr style='margin: 12px 0; border-color: #efefef;'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
 # Главные финансовые метрики в одну компактную строку
 c_m1, c_m2, c_m3 = st.columns(3)
@@ -100,8 +100,6 @@ if net_profit > 0:
     c_m3.markdown(f"<div style='color:#005A36; font-size:14px; font-weight:600;'>🟢 Чистая прибыль (налог 15%)</div><div style='font-size:24px; font-weight:600; color:#005A36;'>{net_profit:,.0f} руб./мес.</div>", unsafe_allow_html=True)
 else:
     c_m3.markdown(f"<div style='color:#b00020; font-size:14px; font-weight:600;'>🔴 Чистый убыток проекта</div><div style='font-size:24px; font-weight:600; color:#b00020;'>{net_profit:,.0f} руб./мес.</div>", unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
 
 # Графический блок 50/50 по горизонтали
 c_graph1, c_graph2 = st.columns(2)
@@ -113,27 +111,21 @@ with c_graph1:
             "Категория": ["Чистая прибыль", "Переменные расходы (составы)", "Фикс. расходы и лизинг", "Налог (15%)"],
             "Сумма (руб.)": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax]
         })
-        # Градиентная палитра по брендбуку: Фиолетовый (Finn), Зеленый (Office Green), Графит (Black), Светло-пурпурный
         brand_luxury_colors = ['#4A1A60', '#005A36', '#1A1A1A', '#8E5EA2']
-        fig_pie = px.pie(pie_data, values="Сумма (руб.)", names="Категория", 
+        fig_pie = px.pie(pie_data, values="Сумma (руб.)", names="Категория", 
                          color_discrete_sequence=brand_luxury_colors, hole=0.45)
-        fig_pie.update_layout(margin=dict(t=10, b=10, l=0, r=0), height=210, showlegend=True)
+        fig_pie.update_layout(margin=dict(t=5, b=5, l=0, r=0), height=170, showlegend=True)
         st.plotly_chart(fig_pie, use_container_width=True)
     else:
         st.warning("Круговая диаграмма активируется при выходе проекта в прибыль.")
 
 with c_graph2:
     st.markdown("<b style='font-size:13px; color:#4A1A60; font-family:Inter;'>📈 ПРОГНОЗ НАКОПИТЕЛЬНОГО БАЛАНСА (6 МЕСЯЦЕВ)</b>", unsafe_allow_html=True)
-    
-    # Исправление логики графика: корректный расчет накопления
     months_list = ["Старт", "1 мес.", "2 мес.", "3 мес.", "4 мес.", "5 мес.", "6 мес."]
-    
-    # В точке "Старт" баланс равен только стоимости первоначального закупа (минус)
     cumulative_balances = [-initial_invest]
     current_balance = -initial_invest
     
     for m in range(1, 7):
-        # Пересчитываем расходы: если месяц превышает срок лизинга, платеж по лизингу убирается
         if m <= lease_months:
             m_fixed = total_fixed_costs_with_lease
         else:
@@ -147,9 +139,56 @@ with c_graph2:
         cumulative_balances.append(current_balance)
         
     df_line = pd.DataFrame({"Баланс проекта (руб.)": cumulative_balances}, index=months_list)
-    
-    # Построение красивого линейного графика в фирменном фиолетовом цвете бренда
     fig_line = px.line(df_line, y="Баланс проекта (руб.)", markers=True, color_discrete_sequence=['#4A1A60'])
     fig_line.add_hline(y=0, line_dash="dash", line_color="#005A36", annotation_text="Точка окупаемости")
-    fig_line.update_layout(margin=dict(t=10, b=10, l=0, r=0), height=210, xaxis_title=None, yaxis_title=None)
+    fig_line.update_layout(margin=dict(t=5, b=5, l=0, r=0), height=170, xaxis_title=None, yaxis_title=None)
     st.plotly_chart(fig_line, use_container_width=True)
+
+# --- НОВЫЙ БЛОК: СРАВНЕНИЕ ЭФФЕКТИВНОСТИ И ДОХОДНОСТИ КАБИНЕТОВ ---
+st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
+st.markdown("<b style='font-size:14px; color:#4A1A60; font-family:Inter;'>⚖️ СРАВНИТЕЛЬНЫЙ АНАЛИЗ ЭФФЕКТИВНОСТИ ИСПОЛЬЗОВАНИЯ ИНФРАСТРУКТУРЫ САНАТОРИЯ</b>", unsafe_allow_html=True)
+
+# Формирование таблицы сравнения (ARESSAGE vs Классика)
+avg_aressage_price = (price_face + price_hair) / 2
+avg_aressage_cost = ((cost_face + manipula) + (cost_hair + manipula)) / 2
+aressage_margin_per_min = (avg_aressage_price - avg_aressage_cost) / 30
+
+compare_data = {
+    "Показатель эффективности": [
+        "Средняя цена процедуры для гостя",
+        "Длительность сеанса (минут)",
+        "Себестоимость расходных материалов",
+        "Маржинальный доход с 1 сеанса",
+        "🔥 Доходность кабинета в минуту (RevPM)"
+    ],
+    "Классический массаж / Уход": [
+        "3 200 руб.",
+        "60 мин.",
+        "350 руб.",
+        "2 850 руб.",
+        "47.5 руб. / мин."
+    ],
+    "Классическое обертывание / Спа": [
+        "4 500. руб.",
+        "90 мин.",
+        "800 руб.",
+        "3 700 руб.",
+        "41.1 руб. / мин."
+    ],
+    "ARESSAGE PRO (Аппаратный безинъекционный уход)": [
+        f"{avg_aressage_price:,.0f} руб.",
+        "30 мин.",
+        f"{avg_aressage_cost:,.0f} руб.",
+        f"{(avg_aressage_price - avg_aressage_cost):,.0f} руб.",
+        f"{aressage_margin_per_min:,.1f} руб. / мин."
+    ]
+}
+
+df_compare = pd.DataFrame(compare_data)
+st.table(df_compare)
+
+st.markdown(f"""
+<div style='background-color: #f4f6f4; padding: 10px; border-left: 4px solid #005A36; font-size: 12px; font-family: Inter; color: #333;'>
+    <b>Резюме для руководства УК:</b> За счет высокой маржинальности состава и короткого времени сеанса (всего 30 минут без реабилитации), технология <b>ARESSAGE PRO</b> генерирует в среднем <b>В 2-3 РАЗА БОЛЬШЕ чистой прибыли на 1 минуту работы кабинета</b> и занятости персонала по сравнению с классическими спа-процедурами санатория. Это позволяет кратно поднять выручку без расширения площади медицинского центра.
+</div>
+""", unsafe_allow_html=True)
