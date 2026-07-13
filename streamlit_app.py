@@ -37,7 +37,7 @@ st.markdown("""
 
 # Официальный брендированный заголовок калькулятора
 st.markdown("<div class='main-title'>A R E S S A G E</div>", unsafe_allow_html=True)
-st.markdown("<div class='sub-title'>Aesthetic Regenerative Message • Финансовая Модель</div>", unsafe_allow_html=True)
+st.markdown("<div class='sub-title'>Эстетика восстанавливающего ухода • Финансовая Модель</div>", unsafe_allow_html=True)
 
 # 4 ультра-компактные колонки для ввода данных (умещаются в одну строку на экране)
 c_in1, c_in2, c_in3, c_in4 = st.columns(4)
