@@ -47,18 +47,18 @@ with c_in1:
     clients_face = st.slider("Лицо/Тело (процедур в день)", 0, 10, 3)
     price_face = st.slider("Цена Лицо/Тело (руб.)", 7000, 18000, 9300, step=100)
     clients_hair = st.slider("Волосы (процедур в день)", 0, 10, 3)
-    price_hair = st.slider("Цена Волосы (руб.)", 5000, 15000, 11300, step=100)
+    price_hair = st.slider("Цена Волосы (руб.)", 8000, 20000, 11300, step=100)
     days = st.slider("Рабочих дней в мес.", 15, 30, 22)
 
 with c_in2:
     st.markdown("<b style='color:#4A1A60;'>🧪 Себестоимость сеанса</b>", unsafe_allow_html=True)
-    cost_face = st.slider("Состав Лицо/Тело (руб.)", 1500, 6000, 3100, step=50)
-    cost_hair = st.slider("Состав Волосы (руб.)", 1500, 6000, 4000, step=50)
+    cost_face = st.slider("Состав Лицо/Тело (руб.)", 1500, 6000, 3800, step=50)
+    cost_hair = st.slider("Состав Волосы (руб.)", 1500, 6000, 4500, step=50)
     manipula = st.slider("Манипула/Насадка (руб.)", 0, 1000, 425, step=25)
 
 with c_in3:
     st.markdown("<b style='color:#005A36;'>📉 Оборудование и Лизинг</b>", unsafe_allow_html=True)
-    device_cost = st.number_input("Стоимость аппарата (руб.)", value=1200000, step=50000)
+    device_cost = st.number_input("Стоимость аппарата (руб.)", value=900000, step=50000)
     lease_rate = st.number_input("Лизинговая ставка (%)", value=15.0, step=0.5)
     lease_months = st.slider("Срок лизинга (мес.)", 6, 36, 12)
     initial_invest = st.number_input("Стартовый закуп (руб.)", value=150000, step=10000)
