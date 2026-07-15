@@ -45,7 +45,7 @@ c_in1, c_in2, c_in3, c_in4 = st.columns(4)
 with c_in1:
     st.markdown("<b style='color:#4A1A60;'>👤 Клиенты и Цены</b>", unsafe_allow_html=True)
     clients_face = st.slider("Лицо/Тело (процедур в день)", 0, 10, 3)
-    price_face = st.slider("Цена Лицо/Тело (руб.)", 5000, 15000, 9300, step=100)
+    price_face = st.slider("Цена Лицо/Тело (руб.)", 7000, 18000, 9300, step=100)
     clients_hair = st.slider("Волосы (процедур в день)", 0, 10, 3)
     price_hair = st.slider("Цена Волосы (руб.)", 5000, 15000, 11300, step=100)
     days = st.slider("Рабочих дней в мес.", 15, 30, 22)
