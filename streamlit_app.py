@@ -238,10 +238,10 @@ html_table = f"""
         <td><b>Средняя цена для гостя</b></td>
         <td>4 500 ₽</td>
         <td>6 500 ₽</td>
-        <td>{{avg_price_rub:,.0f}} ₽</td>
+        <td>{avg_price_rub:,.0f} ₽</td>
         <td>100 Br</td>
         <td>145 Br</td>
-        <td>{{avg_price_byn:,.0f}} Br</td>
+        <td>{avg_price_byn:,.0f} Br</td>
     </tr>
     <tr>
         <td><b>Длительность сеанса</b></td>
@@ -256,28 +256,28 @@ html_table = f"""
         <td><b>Себестоимость расходников</b></td>
         <td>400 ₽</td>
         <td>950 ₽</td>
-        <td>{{avg_cost_rub:,.0f}} ₽</td>
+        <td>{avg_cost_rub:,.0f} ₽</td>
         <td>10 Br</td>
         <td>22 Br</td>
-        <td>{{avg_cost_byn:,.0f}} Br</td>
+        <td>{avg_cost_byn:,.0f} Br</td>
     </tr>
     <tr>
         <td><b>Маржинальный доход</b></td>
         <td>4 100 ₽</td>
         <td>5 550 ₽</td>
-        <td>{{margin_rub:,.0f}} ₽</td>
+        <td>{margin_rub:,.0f} ₽</td>
         <td>90 Br</td>
         <td>123 Br</td>
-        <td>{{margin_byn:,.0f}} Br</td>
+        <td>{margin_byn:,.0f} Br</td>
     </tr>
     <tr class="highlight-row">
         <td><b>🔥 Доход в минуту (RevPM)</b></td>
         <td>68.3 ₽/мин.</td>
         <td>61.7 ₽/мин.</td>
-        <td>{{rev_per_min_rub:,.1f}} ₽/мин.</td>
+        <td>{rev_per_min_rub:,.1f} ₽/мин.</td>
         <td>1.5 Br/мин.</td>
         <td>1.4 Br/мин.</td>
-        <td>{{rev_per_min_byn:,.1f}} Br/мин.</td>
+        <td>{rev_per_min_byn:,.1f} Br/мин.</td>
     </tr>
 </table>
 """
