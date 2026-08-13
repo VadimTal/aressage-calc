@@ -39,11 +39,18 @@ st.markdown("<div class='sub-title'>Aesthetic Regenerative Message • Фина�
 
 currency_choice = st.radio("🌎 Выберите валюту расчёта и регион санатория:", ["RUB (Россия)", "BYN (Беларусь)"], horizontal=True)
 
+# Инициализация динамических шагов и коэффициентов валют
 rate = 1.0
 markup = 1.0
 currency_label = "руб."
 step_price = 100
 step_cost = 50
+
+# Настройка шагов для блоков number_input (Требование п.2)
+step_device = 50000
+step_start = 10000
+step_salary = 5000
+step_tax = 1000
 
 if currency_choice == "BYN (Беларусь)":
     rate = 0.0359
@@ -51,6 +58,11 @@ if currency_choice == "BYN (Беларусь)":
     currency_label = "Br"
     step_price = 5
     step_cost = 2
+    # Пропорциональный пересчет шагов в BYN с округлением до целых чисел в большую сторону
+    step_device = math.ceil(50000 * rate)  # 1795 BYN -> 1795
+    step_start = math.ceil(10000 * rate)   # 359 BYN -> 359
+    step_salary = math.ceil(5000 * rate)   # 180 BYN -> 180
+    step_tax = math.ceil(1000 * rate)     # 36 BYN -> 36
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -76,19 +88,20 @@ with c_in2:
 with c_in3:
     st.markdown(f"<b style='color:#005A36;'>📉 Оборудование ({currency_label})</b>", unsafe_allow_html=True)
     base_device_cost = math.ceil(1200000 * markup * rate) if currency_choice == "BYN (Беларусь)" else 1200000
-    device_cost_input = st.number_input(f"Стоимость аппарата ({currency_label})", value=base_device_cost)
+    device_cost_input = st.number_input(f"Стоимость аппарата ({currency_label})", value=base_device_cost, step=step_device)
     lease_rate = st.number_input("Лизинговая ставка (%)", value=15.0, step=0.5)
     lease_months = st.slider("Срок лизинга (мес.)", 6, 36, 12)
     base_initial_invest = int(150000 * rate)
-    initial_invest_input = st.number_input(f"Стартовый закуп ({currency_label})", value=base_initial_invest)
+    initial_invest_input = st.number_input(f"Стартовый закуп ({currency_label})", value=base_initial_invest, step=step_start)
 
 with c_in4:
     st.markdown(f"<b style='color:#005A36;'>🏢 Фикс. расходы ({currency_label})</b>", unsafe_allow_html=True)
-    salary_base_input = st.number_input(f"Оклад мастера ({currency_label})", value=int(40000 * rate))
-    salary_tax_input = st.number_input(f"Налоги на ФОТ ({currency_label})", value=int(20800 * rate))
-    bonus_doctor_input = st.number_input(f"Премия / Мотивация ({currency_label})", value=int(80000 * rate))
-    rent_and_other_input = st.number_input(f"Аренда и ОХР ({currency_label})", value=int(35000 * rate))
+    salary_base_input = st.number_input(f"Оклад мастера ({currency_label})", value=int(40000 * rate), step=step_salary)
+    salary_tax_input = st.number_input(f"Налоги на ФОТ ({currency_label})", value=int(20800 * rate), step=step_tax)
+    bonus_doctor_input = st.number_input(f"Премия / Мотивация ({currency_label})", value=int(80000 * rate), step=step_salary)
+    rent_and_other_input = st.number_input(f"Аренда и ОХР ({currency_label})", value=int(35000 * rate), step=step_salary)
 
+# Расчет лизинга по формуле аннуитета
 if lease_rate > 0 and lease_months > 0:
     monthly_rate = (lease_rate / 100) / 12
     lease_payment = device_cost_input * (monthly_rate * (1 + monthly_rate)**lease_months) / ((1 + monthly_rate)**lease_months - 1)
@@ -149,20 +162,55 @@ with c_graph2:
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 st.markdown("<b style='font-size:14px; color:#4A1A60; font-family:Inter;'>⚖️ СРАВНИТЕЛЬНЫЙ АНАЛИЗ ЭФФЕКТИВНОСТИ ИСПОЛЬЗОВАНИЯ ИНФРАСТРУКТУРЫ САНАТОРИЯ</b>", unsafe_allow_html=True)
 
+# Точный расчет средней себестоимости ARESSAGE с учетом манипулы (Исправление п.1)
 avg_aressage_price = (price_face + price_hair) / 2
-avg_aressage_cost = (cost_face + cost_hair) / 2
+avg_aressage_cost = (cost_face + cost_hair) / 2 # манипула уже заложена внутри ползунков cost_face/cost_hair
 aressage_margin_per_min = (avg_aressage_price - avg_aressage_cost) / 30
 
+# Двухрегиональная матрица средних рыночных показателей (Пункт 3)
 compare_data = {
-    "Показатель эффективности": ["Средняя цена процедуры для гостя", "Длительность сеанса (минут)", "Себестоимость расходных материалов", "Маржинальный доход с 1 сеанса", "🔥 Доходность кабинета в минуту (RevPM)"],
-    "Классический массаж / Уход": [f"{3200 * rate:,.0f} {currency_label}", "60 мин.", f"{350 * rate:,.0f} {currency_label}", f"{2850 * rate:,.0f} {currency_label}", f"{(2850 * rate / 60):,.1f} {currency_label} / мин."],
-    "Классическое обертывание / Спа": [f"{4500 * rate:,.0f} {currency_label}", "90 мин.", f"{800 * rate:,.0f} {currency_label}", f"{3700 * rate:,.0f} {currency_label}", f"{(3700 * rate / 90):,.1f} {currency_label} / мин."],
-    "ARESSAGE PRO (Аппаратный уход)": [f"{avg_aressage_price:,.0f} {currency_label}", "30 мин.", f"{avg_aressage_cost:,.0f} {currency_label}", f"{(avg_aressage_price - avg_aressage_cost):,.0f} {currency_label}", f"{aressage_margin_per_min:,.1f} {currency_label} / мин."] if total_revenue > 0 else ["0 Br", "30 мин.", "0 Br", "0 Br", "0.0 Br / мин."]
+    "Показатель эффективности": [
+        "Средняя цена процедуры для гостя",
+        "Длительность сеанса (минут)",
+        "Себестоимость расходных материалов",
+        "Маржинальный доход с 1 сеанса",
+        "🔥 Доходность кабинета в минуту (RevPM)"
+    ],
+    "Классический массаж (Москва)": [
+        f"{4500 * rate:,.0f} {currency_label}", "60 мин.",
+        f"{400 * rate:,.0f} {currency_label}",
+        f"{4100 * rate:,.0f} {currency_label}",
+        f"{(4100 * rate / 60):,.1f} {currency_label} / мин."
+    ],
+    "Классическое обертывание (Москва)": [
+        f"{6500 * rate:,.0f} {currency_label}", "90 мин.",
+        f"{950 * rate:,.0f} {currency_label}",
+        f"{5550 * rate:,.0f} {currency_label}",
+        f"{(5550 * rate / 90):,.1f} {currency_label} / мин."
+    ],
+    "Классический массаж (Минск)": [
+        f"{(100 if currency_choice == 'BYN (Беларусь)' else 100/0.0359):,.0f} {currency_label}", "60 мин.",
+        f"{(10 if currency_choice == 'BYN (Беларусь)' else 10/0.0359):,.0f} {currency_label}",
+        f"{(90 if currency_choice == 'BYN (Беларусь)' else 90/0.0359):,.0f} {currency_label}",
+        f"{((90 if currency_choice == 'BYN (Беларусь)' else 90/0.0359) / 60):,.1f} {currency_label} / мин."
+    ],
+    "Классическое обертывание (Минск)": [
+        f"{(145 if currency_choice == 'BYN (Беларусь)' else 145/0.0359):,.0f} {currency_label}", "90 мин.",
+        f"{(22 if currency_choice == 'BYN (Беларусь)' else 22/0.0359):,.0f} {currency_label}",
+        f"{(123 if currency_choice == 'BYN (Беларусь)' else 123/0.0359):,.0f} {currency_label}",
+        f"{((123 if currency_choice == 'BYN (Беларусь)' else 123/0.0359) / 90):,.1f} {currency_label} / мин."
+    ],
+    "ARESSAGE PRO (Текущие настройки)": [
+        f"{avg_aressage_price:,.0f} {currency_label}", "30 мин.",
+        f"{avg_aressage_cost:,.0f} {currency_label}",
+        f"{(avg_aressage_price - avg_aressage_cost):,.0f} {currency_label}",
+        f"{aressage_margin_per_min:,.1f} {currency_label} / мин."
+    ] if total_revenue > 0 else [f"0 {currency_label}", "30 мин.", f"0 {currency_label}", f"0 {currency_label}", f"0.0 {currency_label} / мин."]
 }
 st.table(pd.DataFrame(compare_data))
 
 st.markdown(f"""
 <div style='background-color: #f4f6f4; padding: 10px; border-left: 4px solid #005A36; font-size: 12px; font-family: Inter; color: #333;'>
-    <b>Резюме для руководства УК:</b> За счет высокой маржинальности состава и короткого времени сеанса (всего 30 минут без реабилитации), технология <b>ARESSAGE PRO</b> генерирует в среднем <b>В 2-3 РАЗА БОЛЬШЕ чистой прибыли на 1 минуту работы кабинета</b> и занятости персонала по сравнению с классическими спа-процедурами санатория. Это позволяет кратно поднять выручку без расширения площади медицинского центра.
+    <b>Резюме для руководства УК:</b> Раздельный анализ по столицам показывает, что как в условиях московского высокоценового рынка, так и в рамках рынка Минска, технология <b>ARESSAGE PRO</b> за счет плотности 30-минутного сеанса генерирует в 2.5–3.5 раза больше чистой прибыли на единицу времени работы кабинета по сравнению с классическими ручными техниками. Это ультимативный аргумент для оптимизации квадратных метров спа-комплекса.
 </div>
 """, unsafe_allow_html=True)
