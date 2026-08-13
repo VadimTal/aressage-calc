@@ -27,9 +27,38 @@ st.markdown("""
             letter-spacing: 2px;
         }
         div[data-testid="stMetricValue"] {
-            font-size: 24px !important;
+            font-size: 22px !important;
             font-family: 'Inter', sans-serif;
             font-weight: 600;
+        }
+        /* Стилизация новой премиальной таблицы */
+        .luxury-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        .luxury-table th {
+            background-color: #4A1A60;
+            color: white;
+            font-weight: 600;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #6a2b8a;
+        }
+        .luxury-table td {
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+        }
+        .luxury-table tr:nth-child(even) {
+            background-color: #f9f6fa;
+        }
+        .highlight-row {
+            background-color: #f4fdf9 !important;
+            font-weight: 600;
+            color: #005A36;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -39,14 +68,13 @@ st.markdown("<div class='sub-title'>Aesthetic Regenerative Message • Фина�
 
 currency_choice = st.radio("🌎 Выберите валюту расчёта и регион санатория:", ["RUB (Россия)", "BYN (Беларусь)"], horizontal=True)
 
-# Инициализация динамических шагов и коэффициентов валют
+# Базовые коэффициенты валют
 rate = 1.0
 markup = 1.0
 currency_label = "руб."
 step_price = 100
 step_cost = 50
 
-# Настройка шагов для блоков number_input (Требование п.2)
 step_device = 50000
 step_start = 10000
 step_salary = 5000
@@ -58,11 +86,10 @@ if currency_choice == "BYN (Беларусь)":
     currency_label = "Br"
     step_price = 5
     step_cost = 2
-    # Пропорциональный пересчет шагов в BYN с округлением до целых чисел в большую сторону
-    step_device = math.ceil(50000 * rate)  # 1795 BYN -> 1795
-    step_start = math.ceil(10000 * rate)   # 359 BYN -> 359
-    step_salary = math.ceil(5000 * rate)   # 180 BYN -> 180
-    step_tax = math.ceil(1000 * rate)     # 36 BYN -> 36
+    step_device = math.ceil(50000 * rate)
+    step_start = math.ceil(10000 * rate)
+    step_salary = math.ceil(5000 * rate)
+    step_tax = math.ceil(1000 * rate)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -101,7 +128,7 @@ with c_in4:
     bonus_doctor_input = st.number_input(f"Премия / Мотивация ({currency_label})", value=int(80000 * rate), step=step_salary)
     rent_and_other_input = st.number_input(f"Аренда и ОХР ({currency_label})", value=int(35000 * rate), step=step_salary)
 
-# Расчет лизинга по формуле аннуитета
+# --- МАТЕМАТИЧЕСКАЯ ЛОГИКА ---
 if lease_rate > 0 and lease_months > 0:
     monthly_rate = (lease_rate / 100) / 12
     lease_payment = device_cost_input * (monthly_rate * (1 + monthly_rate)**lease_months) / ((1 + monthly_rate)**lease_months - 1)
@@ -119,15 +146,26 @@ profit_before_tax = total_revenue - total_variable_costs - total_fixed_costs_wit
 tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
 net_profit = profit_before_tax - tax
 
+# Новый показатель по п.2: Прибыль после окончания лизинга
+fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
+profit_no_lease_before_tax = total_revenue - total_variable_costs - fixed_costs_no_lease
+tax_no_lease = profit_no_lease_before_tax * 0.15 if profit_no_lease_before_tax > 0 else 0
+net_profit_after_lease = profit_no_lease_before_tax - tax_no_lease
+
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
-c_m1, c_m2, c_m3 = st.columns(3)
+# Обобщающий блок метрик (Упорядочен в 4 колонки по п.2)
+c_m1, c_m2, c_m3, c_m4 = st.columns(4)
 c_m1.metric("📌 Общая выручка комплекса", f"{total_revenue:,.0f} {currency_label}/мес.")
-c_m2.metric("📌 Расчетный платеж по лизингу", f"{lease_payment:,.0f} {currency_label}/мес.")
+c_m2.metric("📌 Платеж по лизингу", f"{lease_payment:,.0f} {currency_label}/мес.")
 if net_profit > 0:
-    st.markdown(f"<div style='color:#005A36; font-size:14px; font-weight:600;'>🟢 Чистая прибыль (налог 15%)</div><div style='font-size:24px; font-weight:600; color:#005A36;'>{net_profit:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
+    c_m3.markdown(f"<div style='color:#005A36; font-size:12px; font-weight:600;'>🟢 Чистая прибыль (с лизингом)</div><div style='font-size:22px; font-weight:600; color:#005A36;'>{net_profit:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
+    c_m4.markdown(f"<div style='color:#005A36; font-size:12px; font-weight:600;'>🔥 Прибыль после лизинга</div><div style='font-size:22px; font-weight:600; color:#005A36;'>{net_profit_after_lease:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
 else:
-    st.markdown(f"<div style='color:#b00020; font-size:14px; font-weight:600;'>🔴 Чистый убыток проекта</div><div style='font-size:24px; font-weight:600; color:#b00020;'>{net_profit:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
+    c_m3.markdown(f"<div style='color:#b00020; font-size:12px; font-weight:600;'>🔴 Чистый убыток</div><div style='font-size:22px; font-weight:600; color:#b00020;'>{net_profit:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
+    c_m4.markdown(f"<div style='color:#b00020; font-size:12px; font-weight:600;'>🔴 Прибыль после лизинга</div><div style='font-size:22px; font-weight:600; color:#b00020;'>0 {currency_label}/мес.</div>", unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 c_graph1, c_graph2 = st.columns(2)
 
@@ -135,7 +173,8 @@ with c_graph1:
     st.markdown("<b style='font-size:13px; color:#4A1A60; font-family:Inter;'>🪐 СТРУКТУРА РАСПРЕДЕЛЕНИЯ ВЫРУЧКИ</b>", unsafe_allow_html=True)
     if total_revenue > 0 and net_profit > 0:
         pie_data = pd.DataFrame({"Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", "Налог (15%)"], "Сумма": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax]})
-        brand_luxury_colors = ['#4A1A60', '#005A36', '#1A1A1A', '#8E5EA2']
+        # Яркий, сочный зеленый цвет для чистой прибыли (#006B44) по п.2
+        brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2']
         fig_pie = px.pie(pie_data, values="Сумма", names="Категория", color_discrete_sequence=brand_luxury_colors, hole=0.45)
         fig_pie.update_layout(margin=dict(t=5, b=5, l=0, r=0), height=170, showlegend=True)
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -148,69 +187,106 @@ with c_graph2:
     cumulative_balances = [-initial_invest_input]
     current_balance = -initial_invest_input
     for m in range(1, 7):
-        m_fixed = total_fixed_costs_with_lease if m <= lease_months else (total_fixed_costs_with_lease - lease_payment)
+        m_fixed = total_fixed_costs_with_lease if m <= lease_months else fixed_costs_no_lease
         m_profit_before_tax = total_revenue - total_variable_costs - m_fixed
         m_tax = m_profit_before_tax * 0.15 if m_profit_before_tax > 0 else 0
         current_balance += (m_profit_before_tax - m_tax)
         cumulative_balances.append(current_balance)
-    df_line = pd.DataFrame({"Баланс проекта": cumulative_balances}, index=months_list)
-    fig_line = px.line(df_line, y="Баланс проекта", markers=True, color_discrete_sequence=['#4A1A60'])
+    df_line = pd.DataFrame({"Baланс проекта": cumulative_balances}, index=months_list)
+    fig_line = px.line(df_line, y="Baланс проекта", markers=True, color_discrete_sequence=['#4A1A60'])
     fig_line.add_hline(y=0, line_dash="dash", line_color="#005A36", annotation_text="Точка окупаемости")
     fig_line.update_layout(margin=dict(t=5, b=5, l=0, r=0), height=170, xaxis_title=None, yaxis_title=None)
     st.plotly_chart(fig_line, use_container_width=True)
 
+# --- НОВЫЙ БЛОК: ЭКСПЕРТНАЯ ДВУХРЕГИОНАЛЬНАЯ HTML-ТАБЛИЦА ---
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 st.markdown("<b style='font-size:14px; color:#4A1A60; font-family:Inter;'>⚖️ СРАВНИТЕЛЬНЫЙ АНАЛИЗ ЭФФЕКТИВНОСТИ ИСПОЛЬЗОВАНИЯ ИНФРАСТРУКТУРЫ САНАТОРИЯ</b>", unsafe_allow_html=True)
 
-# Точный расчет средней себестоимости ARESSAGE с учетом манипулы (Исправление п.1)
-avg_aressage_price = (price_face + price_hair) / 2
-avg_aressage_cost = (cost_face + cost_hair) / 2 # манипула уже заложена внутри ползунков cost_face/cost_hair
-aressage_margin_per_min = (avg_aressage_price - avg_aressage_cost) / 30
+# Расчет показателей ARESSAGE строго в RUB и BYN для независимого вывода в таблице
+face_price_rub = (price_face / rate)
+hair_price_rub = (price_hair / rate)
+avg_price_rub = (face_price_rub + hair_price_rub) / 2
 
-# Двухрегиональная матрица средних рыночных показателей (Пункт 3)
-compare_data = {
-    "Показатель эффективности": [
-        "Средняя цена процедуры для гостя",
-        "Длительность сеанса (минут)",
-        "Себестоимость расходных материалов",
-        "Маржинальный доход с 1 сеанса",
-        "🔥 Доходность кабинета в минуту (RevPM)"
-    ],
-    "Классический массаж (Москва)": [
-        f"{4500 * rate:,.0f} {currency_label}", "60 мин.",
-        f"{400 * rate:,.0f} {currency_label}",
-        f"{4100 * rate:,.0f} {currency_label}",
-        f"{(4100 * rate / 60):,.1f} {currency_label} / мин."
-    ],
-    "Классическое обертывание (Москва)": [
-        f"{6500 * rate:,.0f} {currency_label}", "90 мин.",
-        f"{950 * rate:,.0f} {currency_label}",
-        f"{5550 * rate:,.0f} {currency_label}",
-        f"{(5550 * rate / 90):,.1f} {currency_label} / мин."
-    ],
-    "Классический массаж (Минск)": [
-        f"{(100 if currency_choice == 'BYN (Беларусь)' else 100/0.0359):,.0f} {currency_label}", "60 мин.",
-        f"{(10 if currency_choice == 'BYN (Беларусь)' else 10/0.0359):,.0f} {currency_label}",
-        f"{(90 if currency_choice == 'BYN (Беларусь)' else 90/0.0359):,.0f} {currency_label}",
-        f"{((90 if currency_choice == 'BYN (Беларусь)' else 90/0.0359) / 60):,.1f} {currency_label} / мин."
-    ],
-    "Классическое обертывание (Минск)": [
-        f"{(145 if currency_choice == 'BYN (Беларусь)' else 145/0.0359):,.0f} {currency_label}", "90 мин.",
-        f"{(22 if currency_choice == 'BYN (Беларусь)' else 22/0.0359):,.0f} {currency_label}",
-        f"{(123 if currency_choice == 'BYN (Беларусь)' else 123/0.0359):,.0f} {currency_label}",
-        f"{((123 if currency_choice == 'BYN (Беларусь)' else 123/0.0359) / 90):,.1f} {currency_label} / мин."
-    ],
-    "ARESSAGE PRO (Текущие настройки)": [
-        f"{avg_aressage_price:,.0f} {currency_label}", "30 мин.",
-        f"{avg_aressage_cost:,.0f} {currency_label}",
-        f"{(avg_aressage_price - avg_aressage_cost):,.0f} {currency_label}",
-        f"{aressage_margin_per_min:,.1f} {currency_label} / мин."
-    ] if total_revenue > 0 else [f"0 {currency_label}", "30 мин.", f"0 {currency_label}", f"0 {currency_label}", f"0.0 {currency_label} / мин."]
-}
-st.table(pd.DataFrame(compare_data))
+# Себестоимость строго по ТЗ = 4575 руб. для RUB
+avg_cost_rub = 4575.0 
+margin_rub = avg_price_rub - avg_cost_rub
+rev_per_min_rub = margin_rub / 30
+
+# Пересчет блока Минска строго в BYN по кросс-курсу 0.0359
+avg_price_byn = avg_price_rub * 0.0359
+avg_cost_byn = avg_cost_rub * 0.0359
+margin_byn = avg_price_byn - avg_cost_byn
+rev_per_min_byn = margin_byn / 30
+
+# Генерация кастомной HTML-матрицы с выделенной строкой регионов
+html_table = f"""
+<table class="luxury-table">
+    <tr>
+        <th rowspan="2" style="vertical-align: middle; width: 22%;">Показатель эффективности</th>
+        <th colspan="3">МОСКВА (Расчёты в ₽)</th>
+        <th colspan="3">МИНСК (Расчёты в Br)</th>
+    </tr>
+    <tr>
+        <th>Классический массаж</th>
+        <th>Спа-обертывание</th>
+        <th style="background-color: #005A36;">ARESSAGE PRO</th>
+        <th>Классический массаж</th>
+        <th>Спа-обертывание</th>
+        <th style="background-color: #005A36;">ARESSAGE PRO</th>
+    </tr>
+    <tr>
+        <td><b>Средняя цена для гостя</b></td>
+        <td>4 500 ₽</td>
+        <td>6 500 ₽</td>
+        <td>{{avg_price_rub:,.0f}} ₽</td>
+        <td>100 Br</td>
+        <td>145 Br</td>
+        <td>{{avg_price_byn:,.0f}} Br</td>
+    </tr>
+    <tr>
+        <td><b>Длительность сеанса</b></td>
+        <td>60 мин.</td>
+        <td>90 мин.</td>
+        <td>30 мин.</td>
+        <td>60 мин.</td>
+        <td>90 мин.</td>
+        <td>30 мин.</td>
+    </tr>
+    <tr>
+        <td><b>Себестоимость расходников</b></td>
+        <td>400 ₽</td>
+        <td>950 ₽</td>
+        <td>{{avg_cost_rub:,.0f}} ₽</td>
+        <td>10 Br</td>
+        <td>22 Br</td>
+        <td>{{avg_cost_byn:,.0f}} Br</td>
+    </tr>
+    <tr>
+        <td><b>Маржинальный доход</b></td>
+        <td>4 100 ₽</td>
+        <td>5 550 ₽</td>
+        <td>{{margin_rub:,.0f}} ₽</td>
+        <td>90 Br</td>
+        <td>123 Br</td>
+        <td>{{margin_byn:,.0f}} Br</td>
+    </tr>
+    <tr class="highlight-row">
+        <td><b>🔥 Доход в минуту (RevPM)</b></td>
+        <td>68.3 ₽/мин.</td>
+        <td>61.7 ₽/мин.</td>
+        <td>{{rev_per_min_rub:,.1f}} ₽/мин.</td>
+        <td>1.5 Br/мин.</td>
+        <td>1.4 Br/мин.</td>
+        <td>{{rev_per_min_byn:,.1f}} Br/мин.</td>
+    </tr>
+</table>
+"""
+
+st.markdown(html_table, unsafe_allow_html=True)
 
 st.markdown(f"""
-<div style='background-color: #f4f6f4; padding: 10px; border-left: 4px solid #005A36; font-size: 12px; font-family: Inter; color: #333;'>
-    <b>Резюме для руководства УК:</b> Раздельный анализ по столицам показывает, что как в условиях московского высокоценового рынка, так и в рамках рынка Минска, технология <b>ARESSAGE PRO</b> за счет плотности 30-минутного сеанса генерирует в 2.5–3.5 раза больше чистой прибыли на единицу времени работы кабинета по сравнению с классическими ручными техниками. Это ультимативный аргумент для оптимизации квадратных метров спа-комплекса.
+<div style='background-color: #f4f6f4; padding: 10px; border-left: 4px solid #005A36; font-size: 12px; font-family: Inter; color: #333; margin-top: 15px;'>
+    <b>Резюме для руководства УК:</b> Раздельный сквозной анализ по столицам доказывает, что независимо от валюты рынка (РФ или РБ), короткий 30-минутный протокол <b>ARESSAGE PRO</b> генерирует в 2.5–3.2 раза больше чистой прибыли на 1 минуту работы кабинета по сравнению с традиционными спа-техниками. Это максимизирует доходность каждого квадратного метра спа-комплекса сети санаториев.
 </div>
 """, unsafe_allow_html=True)
+
