@@ -222,8 +222,7 @@ c_graph1, c_graph2 = st.columns(2)
 with c_graph1:
     st.markdown("<b style='font-size:13px; color:#4A1A60; font-family:Inter;'>🪐 СТРУКТУРА РАСПРЕДЕЛЕНИЯ ВЫРУЧКИ</b>", unsafe_allow_html=True)
     if total_revenue > 0 and net_profit > 0:
-        # Динамическое перестроение секторов в зависимости от региона
-                if currency_choice == "BYN (Беларусь)":
+        if currency_choice == "BYN (Беларусь)":
             pie_data = pd.DataFrame({
                 "Категория": ["Чистая прибыль", "Переменные расходы (без НДС)", "Фикс. расходы и лизинг", "Налог на прибыль (15%)", "⚡ Чистый НДС в бюджет"],
                 "Сумма": [net_profit, total_variable_costs_for_pie, total_fixed_costs_with_lease, tax, vat_belarus]
