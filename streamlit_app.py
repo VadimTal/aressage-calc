@@ -92,8 +92,8 @@ if currency_choice == "RUB (Россия)":
 else:
     currency_label = "Br"
     # Стартовые значения цен и себестоимостей для РБ (по вашей новой таблице)
-    default_price_face = 240
-    default_price_hair = 300
+    default_price_face = 300
+    default_price_hair = 370
     default_cost_face = 166
     default_cost_hair = 192
     default_manipula = 11   # math.ceil(329 / 30) = 11 BYN
@@ -230,8 +230,8 @@ rev_per_min_rub = margin_rub / 30
 # Себестоимость Face в РБ = 166 + 11 (манипула) + 45 (раствор) = 222 Br
 # Себестоимость Hair в РБ = 192 + 11 (манипула) + 45 (раствор) = 248 Br
 # Средняя себестоимость для таблицы РБ = (222 + 248) / 2 = 235 Br
-# Средняя цена для таблицы РБ = (335 + 405) / 2 = 370 Br
-avg_price_byn = (335 + 405) / 2
+# Средняя цена для таблицы РБ = (300 + 370) / 2 = 335 Br
+avg_price_byn = (300 + 370) / 2
 avg_cost_byn = 235.0
 margin_byn = avg_price_byn - avg_cost_byn
 rev_per_min_byn = margin_byn / 30
