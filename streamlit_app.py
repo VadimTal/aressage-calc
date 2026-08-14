@@ -160,25 +160,37 @@ total_revenue = monthly_face_rev + monthly_hair_rev
 total_variable_costs = (clients_face * days * (cost_face + manipula)) + (clients_hair * days * (cost_hair + manipula))
 total_fixed_costs_with_lease = lease_payment + salary_base_input + salary_tax_input + bonus_doctor_input + rent_and_other_input
 
-# --- МАТЕМАТИЧЕСКАЯ ЛОГИКА С УЧЕТОМ НАЛОГОВ И НДС ---
+# --- МАТЕМАТИЧЕСКАЯ ЛОГИКА С НАЛОГОВЫМ ОЧИЩЕНИЕМ НДС (БЕЛАРУСЬ) ---
 profit_before_tax = total_revenue - total_variable_costs - total_fixed_costs_with_lease
 
-# Налоговая калькуляция с учетом НДС 20% для Беларуси
 if currency_choice == "BYN (Беларусь)":
-    vat_belarus = total_revenue * 0.20
-    # Сценарий 1: Чистая прибыль С ЛИЗИНГОМ (очищаем базу от НДС перед налогом 15%)
-    profit_after_vat = profit_before_tax - vat_belarus
-    tax = profit_after_vat * 0.15 if profit_after_vat > 0 else 0
-    net_profit = profit_after_vat - tax
+    # 1. Выделяем исходящий НДС из выручки (НДС = Выручка * 20 / 120)
+    vat_output = total_revenue - (total_revenue / 1.20)
+    revenue_clear = total_revenue / 1.20
     
-    # Сценарий 2: Чистая прибыль ПОСЛЕ ЛИЗИНГА (также очищаем от НДС)
+    # 2. Выделяем входящий НДС из переменных затрат на составы (НДС = Затраты * 20 / 120)
+    vat_input = total_variable_costs - (total_variable_costs / 1.20)
+    variable_costs_clear = total_variable_costs / 1.20
+    
+    # 3. Чистый НДС к уплате в бюджет (разница к уплате)
+    vat_belarus = vat_output - vat_input if vat_output > vat_input else 0
+    
+    # 4. Расчет чистой прибыли С ЛИЗИНГОМ на очищенной базе
+    # База для налога на прибыль (15%) = Очищенная выручка - Очищенные переменные косты - Фикс косты
+    profit_clear_before_tax = revenue_clear - variable_costs_clear - total_fixed_costs_with_lease
+    tax = profit_clear_before_tax * 0.15 if profit_clear_before_tax > 0 else 0
+    net_profit = profit_clear_before_tax - tax
+    
+    # 5. Расчет чистой прибыли ПОСЛЕ ОКОНЧАНИЯ ЛИЗИНГА на очищенной базе
     fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
-    profit_no_lease_before_tax = total_revenue - total_variable_costs - fixed_costs_no_lease
-    profit_no_lease_after_vat = profit_no_lease_before_tax - vat_belarus
-    tax_no_lease = profit_no_lease_after_vat * 0.15 if profit_no_lease_after_vat > 0 else 0
-    net_profit_after_lease = profit_no_lease_after_vat - tax_no_lease
+    profit_no_lease_clear_before_tax = revenue_clear - variable_costs_clear - fixed_costs_no_lease
+    tax_no_lease = profit_no_lease_clear_before_tax * 0.15 if profit_no_lease_clear_before_tax > 0 else 0
+    net_profit_after_lease = profit_no_lease_clear_before_tax - tax_no_lease
+
+    # Корректируем переменные затраты для круговой диаграммы, чтобы показать их без НДС
+    total_variable_costs_for_pie = variable_costs_clear
 else:
-    # Стандартный расчет для России (без НДС в структуре диаграммы)
+    # Стандартный расчет для России (без выделения НДС)
     vat_belarus = 0
     tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
     net_profit = profit_before_tax - tax
@@ -187,6 +199,8 @@ else:
     profit_no_lease_before_tax = total_revenue - total_variable_costs - fixed_costs_no_lease
     tax_no_lease = profit_no_lease_before_tax * 0.15 if profit_no_lease_before_tax > 0 else 0
     net_profit_after_lease = profit_no_lease_before_tax - tax_no_lease
+    
+    total_variable_costs_for_pie = total_variable_costs
 
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
@@ -209,17 +223,16 @@ with c_graph1:
     st.markdown("<b style='font-size:13px; color:#4A1A60; font-family:Inter;'>🪐 СТРУКТУРА РАСПРЕДЕЛЕНИЯ ВЫРУЧКИ</b>", unsafe_allow_html=True)
     if total_revenue > 0 and net_profit > 0:
         # Динамическое перестроение секторов в зависимости от региона
-        if currency_choice == "BYN (Беларусь)":
+                if currency_choice == "BYN (Беларусь)":
             pie_data = pd.DataFrame({
-                "Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", "Налог (15%)", "⚡ НДС (20%)"],
-                "Сумма": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax, vat_belarus]
+                "Категория": ["Чистая прибыль", "Переменные расходы (без НДС)", "Фикс. расходы и лизинг", "Налог на прибыль (15%)", "⚡ Чистый НДС в бюджет"],
+                "Сумма": [net_profit, total_variable_costs_for_pie, total_fixed_costs_with_lease, tax, vat_belarus]
             })
-            # Дорогой биотех-градиент с добавлением контрастного сектора для НДС
             brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2', '#D4AF37']
         else:
             pie_data = pd.DataFrame({
                 "Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", "Налог (15%)"],
-                "Сумма": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax]
+                "Сумма": [net_profit, total_variable_costs_for_pie, total_fixed_costs_with_lease, tax]
             })
             brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2']
             
