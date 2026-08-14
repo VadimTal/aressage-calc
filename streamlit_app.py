@@ -61,17 +61,18 @@ with c_in2:
     cost_face = st.slider("Состав Лицо/Тело (Netto)", int(df_c_face*0.5), int(df_c_face*2), df_c_face, step_c)
     cost_hair = st.slider("Состав Волосы (Netto)", int(df_c_hair*0.5), int(df_c_hair*2), df_c_hair, step_c)
     manipula = st.slider("Манипула/Насадка", 0, int(df_manipula*3), df_manipula, step_c)
+# Найти в БЛОКЕ 1 строки ввода оборудования и фикс. расходов и заменить их на эти:
 with c_in3:
     st.markdown(f"<b>⚙️ Оборудование ({currency_label})</b>", unsafe_allow_html=True)
-    device_cost_input = st.number_input("Стоимость аппарата", value=df_device, step=step_dev)
-    lease_rate = st.number_input("Лизинговая ставка (%)", value=15.0, step=0.5)
+    device_cost_input = st.number_input("Стоимость аппарата", value=df_device, step=step_dev, format="%d")
+    lease_rate = st.number_input("Лизинговая ставка (%)", value=15.0, step=0.5, format="%.1f")
     lease_months = st.slider("Срок лизинга (мес.)", 6, 36, 12)
-    initial_invest_input = st.number_input("Стартовый закуп", value=df_start, step=step_st)
+    initial_invest_input = st.number_input("Стартовый закуп", value=df_start, step=step_st, format="%d")
 with c_in4:
     st.markdown(f"<b>📊 Фикс. расходы ({currency_label})</b>", unsafe_allow_html=True)
-    salary_base_input = st.number_input("Оклад мастера", value=df_salary, step=step_sal)
-    bonus_doctor_input = st.number_input("Премия / Мотивация", value=int(df_salary*2), step=step_sal)
-    rent_and_other_input = st.number_input("Аренда и ОХР кабинета", value=df_rent, step=step_sal)
+    salary_base_input = st.number_input("Оклад мастера", value=df_salary, step=step_sal, format="%d")
+    bonus_doctor_input = st.number_input("Премия / Мотивация", value=int(df_salary*2), step=step_sal, format="%d")
+    rent_and_other_input = st.number_input("Аренда и ОХР кабинета", value=df_rent, step=step_sal, format="%d")
 
 # --- МАТЕМАТИЧЕСКАЯ И НАЛОГОВАЯ ЛОГИКА (100% ЗАКОНОДАТЕЛЬСТВО 2026) ---
 
@@ -130,14 +131,25 @@ profit_no_lease_clear_before_tax = revenue_clear - total_variable_costs_clear - 
 tax_no_lease = profit_no_lease_clear_before_tax * tax_rate if profit_no_lease_clear_before_tax > 0 else 0
 net_profit_after_lease = profit_no_lease_clear_before_tax - tax_no_lease
 
+def fmt(val, decimals=0):
+    if decimals == 0:
+        return f"{int(round(val)):,}".replace(",", " ")
+    else:
+        formatted = f"{round(val, decimals):,}"
+        # Защита от наложения американских запятых и точек
+        parts = formatted.split('.')
+        if len(parts) == 2:
+            return parts[0].replace(",", " ") + "," + parts[1]
+        return formatted.replace(",", " ")
+
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
-# Вывод KPI-метрик
+# Вывод KPI-метрик с русским форматированием
 c_m1, c_m2, c_m3, c_m4 = st.columns(4)
-c_m1.metric("💰 Общая выручка комплекса", f"{total_revenue:,.0f} {currency_label}/мес.")
-c_m2.metric("📜 Платеж по лизингу (Аннуитет)", f"{lease_payment:,.0f} {currency_label}/мес.")
-c_m3.metric("📈 Чистая прибыль (с лизингом)", f"{net_profit:,.0f} {currency_label}/мес.")
-c_m4.metric("🌟 Прибыль после лизинга", f"{net_profit_after_lease:,.0f} {currency_label}/мес.")
+c_m1.metric("💰 Общая выручка комплекса", f"{fmt(total_revenue)} {currency_label}/мес.")
+c_m2.metric("📜 Платеж по лизингу (Аннуитет)", f"{fmt(lease_payment)} {currency_label}/мес.")
+c_m3.metric("📈 Чистая прибыль (с лизингом)", f"{fmt(net_profit)} {currency_label}/мес.")
+c_m4.metric("🌟 Прибыль после лизинга", f"{fmt(net_profit_after_lease)} {currency_label}/мес.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -208,10 +220,10 @@ html_table = f"""
 </tr>
 <tr class='highlight-row'>
     <td><b>🔥 Чистая Маржа в минуту (Margin per Minute)</b></td>
-    <td>68.3 ₽/мин.</td>
-    <td>{rev_min_rf:,.1f} ₽/мин.</td>
-    <td>1.5 Br/мин.</td>
-    <td>{rev_min_rb:,.1f} Br/мин.</td>
+    <td>68,3 ₽/мин.</td>
+    <td>{fmt(rev_min_rf, 1)} ₽/мин.</td>
+    <td>1,5 Br/мин.</td>
+    <td>{fmt(rev_min_rb, 1)} Br/мин.</td>
 </tr>
 </table>
 """
