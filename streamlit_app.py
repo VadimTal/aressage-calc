@@ -121,7 +121,7 @@ with c_in1:
     price_face = st.slider(f"Цена Лицо/Тело ({currency_label})", min_value=int(default_price_face*0.5), max_value=int(default_price_face*2), value=default_price_face, step=step_price)
     clients_hair = st.slider("Волосы (процедур в день)", 0, 10, 3)
     price_hair = st.slider(f"Цена Волосы ({currency_label})", min_value=int(default_price_hair*0.5), max_value=int(default_price_hair*2), value=default_price_hair, step=step_price)
-    days = st.slider("Рабочих дней в мес.", 15, 30, 22)
+    days = st.slider("Рабочих дней в мес.", 15, 30, 25)
 
 with c_in2:
     st.markdown(f"<b style='color:#4A1A60;'>🧪 Себестоимость сеанса ({currency_label})</b>", unsafe_allow_html=True)
