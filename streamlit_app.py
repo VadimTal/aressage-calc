@@ -110,18 +110,18 @@ else:
         st.info("💡 В РБ базовая ставка налога составляет 20%. Новая 3-летняя льгота действует для объектов из спецперечня Совмина РБ.")
         
     # Константы цен для РБ строго по вашей таблице расчета
-    default_price_face = 166
-    default_price_hair = 192
+    default_price_face = 300
+    default_price_hair = 370
     default_cost_face = 166
     default_cost_hair = 192
     default_manipula = 11
     default_device = 19709
-    default_start = 5400
+    default_start = 3400
     default_salary = 1450
     default_tax = 750
     default_bonus = 2850
     default_rent = 1250
-    step_price, step_cost, step_device, step_start, step_salary, step_tax = 5, 2, 1800, 360, 180, 36
+    step_price, step_cost, step_device, step_start, step_salary, step_tax = 5, 5, 1000, 350, 100, 50
 
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
@@ -133,7 +133,7 @@ with c_in1:
     price_face = st.slider(f"Цена Лицо/Тело ({currency_label})", min_value=int(default_price_face*0.5), max_value=int(default_price_face*2), value=default_price_face, step=step_price)
     clients_hair = st.slider("Волосы (процедур в день)", 0, 10, 3)
     price_hair = st.slider(f"Цена Волосы ({currency_label})", min_value=int(default_price_hair*0.5), max_value=int(default_price_hair*2), value=default_price_hair, step=step_price)
-    days = st.slider("Рабочих дней в мес.", 15, 30, 22)
+    days = st.slider("Рабочих дней в мес.", 15, 30, 25)
 
 with c_in2:
     st.markdown(f"<b style='color:#4A1A60;'>🧪 Себестоимость сеанса ({currency_label})</b>", unsafe_allow_html=True)
@@ -255,8 +255,8 @@ avg_cost_rub = 4575.0
 margin_rub = avg_price_rub - avg_cost_rub
 rev_per_min_rub = margin_rub / 30
 
-avg_price_byn = (166 + 192) / 2
-avg_cost_byn = avg_cost_rub * 0.0359
+avg_price_byn = (300 + 370) / 2
+avg_cost_byn = 235.0
 margin_byn = avg_price_byn - avg_cost_byn
 rev_per_min_byn = margin_byn / 30
 
