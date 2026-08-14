@@ -160,14 +160,33 @@ total_revenue = monthly_face_rev + monthly_hair_rev
 total_variable_costs = (clients_face * days * (cost_face + manipula)) + (clients_hair * days * (cost_hair + manipula))
 total_fixed_costs_with_lease = lease_payment + salary_base_input + salary_tax_input + bonus_doctor_input + rent_and_other_input
 
+# --- МАТЕМАТИЧЕСКАЯ ЛОГИКА С УЧЕТОМ НАЛОГОВ И НДС ---
 profit_before_tax = total_revenue - total_variable_costs - total_fixed_costs_with_lease
-tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
-net_profit = profit_before_tax - tax
 
-fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
-profit_no_lease_before_tax = total_revenue - total_variable_costs - fixed_costs_no_lease
-tax_no_lease = profit_no_lease_before_tax * 0.15 if profit_no_lease_before_tax > 0 else 0
-net_profit_after_lease = profit_no_lease_before_tax - tax_no_lease
+# Налоговая калькуляция с учетом НДС 20% для Беларуси
+if currency_choice == "BYN (Беларусь)":
+    vat_belarus = total_revenue * 0.20
+    # Сценарий 1: Чистая прибыль С ЛИЗИНГОМ (очищаем базу от НДС перед налогом 15%)
+    profit_after_vat = profit_before_tax - vat_belarus
+    tax = profit_after_vat * 0.15 if profit_after_vat > 0 else 0
+    net_profit = profit_after_vat - tax
+    
+    # Сценарий 2: Чистая прибыль ПОСЛЕ ЛИЗИНГА (также очищаем от НДС)
+    fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
+    profit_no_lease_before_tax = total_revenue - total_variable_costs - fixed_costs_no_lease
+    profit_no_lease_after_vat = profit_no_lease_before_tax - vat_belarus
+    tax_no_lease = profit_no_lease_after_vat * 0.15 if profit_no_lease_after_vat > 0 else 0
+    net_profit_after_lease = profit_no_lease_after_vat - tax_no_lease
+else:
+    # Стандартный расчет для России (без НДС в структуре диаграммы)
+    vat_belarus = 0
+    tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
+    net_profit = profit_before_tax - tax
+    
+    fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
+    profit_no_lease_before_tax = total_revenue - total_variable_costs - fixed_costs_no_lease
+    tax_no_lease = profit_no_lease_before_tax * 0.15 if profit_no_lease_before_tax > 0 else 0
+    net_profit_after_lease = profit_no_lease_before_tax - tax_no_lease
 
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
@@ -189,8 +208,21 @@ c_graph1, c_graph2 = st.columns(2)
 with c_graph1:
     st.markdown("<b style='font-size:13px; color:#4A1A60; font-family:Inter;'>🪐 СТРУКТУРА РАСПРЕДЕЛЕНИЯ ВЫРУЧКИ</b>", unsafe_allow_html=True)
     if total_revenue > 0 and net_profit > 0:
-        pie_data = pd.DataFrame({"Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", "Налог (15%)"], "Сумма": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax]})
-        brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2']
+        # Динамическое перестроение секторов в зависимости от региона
+        if currency_choice == "BYN (Беларусь)":
+            pie_data = pd.DataFrame({
+                "Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", "Налог (15%)", "⚡ НДС (20%)"],
+                "Сумма": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax, vat_belarus]
+            })
+            # Дорогой биотех-градиент с добавлением контрастного сектора для НДС
+            brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2', '#D4AF37']
+        else:
+            pie_data = pd.DataFrame({
+                "Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", "Налог (15%)"],
+                "Сумма": [net_profit, total_variable_costs, total_fixed_costs_with_lease, tax]
+            })
+            brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2']
+            
         fig_pie = px.pie(pie_data, values="Сумма", names="Категория", color_discrete_sequence=brand_luxury_colors, hole=0.45)
         fig_pie.update_layout(margin=dict(t=5, b=5, l=0, r=0), height=170, showlegend=True)
         st.plotly_chart(fig_pie, use_container_width=True)
