@@ -92,8 +92,8 @@ if currency_choice == "RUB (Россия)":
 else:
     currency_label = "Br"
     # Стартовые значения цен и себестоимостей для РБ (по вашей новой таблице)
-    default_price_face = 335
-    default_price_hair = 405
+    default_price_face = 240
+    default_price_hair = 300
     default_cost_face = 166
     default_cost_hair = 192
     default_manipula = 11   # math.ceil(329 / 30) = 11 BYN
@@ -101,15 +101,15 @@ else:
     default_start = 5400
     default_salary = 1450
     default_tax = 750
-    default_bonus = 2850
+    default_bonus = 1500
     default_rent = 1250
     # Настройка шагов кнопок +/- для РБ (пропорционально в целых числах)
     step_price = 5
-    step_cost = 2
-    step_device = 1800
-    step_start = 360
-    step_salary = 180
-    step_tax = 36
+    step_cost = 5
+    step_device = 1000
+    step_start = 300
+    step_salary = 100
+    step_tax = 50
 
 st.markdown("<br>", unsafe_allow_html=True)
 
