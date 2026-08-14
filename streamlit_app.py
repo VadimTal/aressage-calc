@@ -119,15 +119,25 @@ if code == "RB":
     vat_input_lease = lease_payment - (lease_payment / 1.20)
     vat_to_budget = vat_output - vat_input_materials - vat_input_lease
     vat_to_budget = max(0.0, vat_to_budget)
+    
+    # КОРРЕКТОР ДЛЯ РБ: Входной НДС уменьшает реальные затраты санатория
+    vat_savings = vat_input_materials + vat_input_lease
+    profit_clear_before_tax = (revenue_clear - total_variable_costs_clear - total_fixed_costs_with_lease) + vat_savings
+    
+    # Расчет после лизинга для РБ (вычет по лизингу уходит, вычет по материалам остается)
+    fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
+    profit_no_lease_clear_before_tax = (revenue_clear - total_variable_costs_clear - fixed_costs_no_lease) + vat_input_materials
+else:
+    # Для РФ все остается без изменений (УСН производителя, зачетов НДС нет)
+    profit_clear_before_tax = revenue_clear - total_variable_costs_clear - total_fixed_costs_with_lease
+    
+    fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
+    profit_no_lease_clear_before_tax = revenue_clear - total_variable_costs_clear - fixed_costs_no_lease
 
-# 5. Итоговая чистая прибыль
-profit_clear_before_tax = revenue_clear - total_variable_costs_clear - total_fixed_costs_with_lease
+# 5. Итоговый расчет налога на прибыль и ЧП по закону 2026 (унифицированный)
 tax = profit_clear_before_tax * tax_rate if profit_clear_before_tax > 0 else 0
 net_profit = profit_clear_before_tax - tax
 
-# Финансовый результат после выплаты лизинга
-fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
-profit_no_lease_clear_before_tax = revenue_clear - total_variable_costs_clear - fixed_costs_no_lease
 tax_no_lease = profit_no_lease_clear_before_tax * tax_rate if profit_no_lease_clear_before_tax > 0 else 0
 net_profit_after_lease = profit_no_lease_clear_before_tax - tax_no_lease
 
