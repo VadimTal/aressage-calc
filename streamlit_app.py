@@ -65,53 +65,65 @@ st.markdown("""
 st.markdown("<div class='main-title'>A R E S S A G E</div>", unsafe_allow_html=True)
 st.markdown("<div class='sub-title'>Aesthetic Regenerative Message • Финансовая Модель</div>", unsafe_allow_html=True)
 
-# Инициализация переключателя валют и баз данных по ТЗ
+# Выбор региона и валюты
 currency_choice = st.radio("🌎 Выберите валюту расчёта и регион санатория:", ["RUB (Россия)", "BYN (Беларусь)"], horizontal=True)
+
+# Блок выбора налогового режима на основе законодательства 2026 года
+st.markdown("### ⚖️ Налоговое окружение и льготы (Актуальность: 2026 год)")
+c_tax1, c_tax2 = st.columns(2)
 
 if currency_choice == "RUB (Россия)":
     currency_label = "руб."
-    # Стартовые значения цен и себестоимостей для РФ
+    with c_tax1:
+        tax_mode_rf = st.selectbox(
+            "Ставка налога на прибыль в РФ (с 2026 г.):",
+            ["Основная ставка ОСНО (25%)", "Льготная ставка ОСНО (0% по ст. 284.1 НК РФ)"],
+            help="Льготная ставка 0% применяется при наличии медицинской лицензии и доле профильных доходов от 90%."
+        )
+        tax_rate = 0.25 if "25%" in tax_mode_rf else 0.0
+    with c_tax2:
+        st.info("💡 Санатории в РФ на ОСНО с 2026 года уплачивают налог на прибыль по ставке 25% (8% федеральный, 17% региональный бюджет).")
+    
+    # Константы цен для РФ
     default_price_face = 9300
     default_price_hair = 11300
     default_cost_face = 3780
     default_cost_hair = 4380
-    default_manipula = 250  # 7500 / 30 процедур = 250 руб
+    default_manipula = 250
     default_device = 450000
     default_start = 150000
     default_salary = 40000
     default_tax = 20800
     default_bonus = 80000
     default_rent = 35000
-    # Настройка шагов кнопок +/- для РФ
-    step_price = 100
-    step_cost = 50
-    step_device = 50000
-    step_start = 10000
-    step_salary = 5000
-    step_tax = 1000
+    step_price, step_cost, step_device, step_start, step_salary, step_tax = 100, 50, 50000, 10000, 5000, 1000
 else:
     currency_label = "Br"
-    # Стартовые значения цен и себестоимостей для РБ (по вашей новой таблице)
-    default_price_face = 300
-    default_price_hair = 370
+    with c_tax1:
+        tax_mode_rb = st.selectbox(
+            "Ставка налога на прибыль в РБ (с 2026 г.):",
+            ["Стандартная ставка (20%)", "Льготная ставка (0% по п. 16 ст. 181 НК РБ)"],
+            help="Льгота 0% введена с 1 января 2026 г. на 3 года для новых объектов, введенных после 01.01.2026."
+        )
+        tax_rate = 0.20 if "20%" in tax_mode_rb else 0.0
+    with c_tax2:
+        st.info("💡 В РБ базовая ставка налога составляет 20%. Новая 3-летняя льгота действует для объектов из спецперечня Совмина РБ.")
+        
+    # Константы цен для РБ строго по вашей таблице расчета
+    default_price_face = 166
+    default_price_hair = 192
     default_cost_face = 166
     default_cost_hair = 192
-    default_manipula = 11   # math.ceil(329 / 30) = 11 BYN
+    default_manipula = 11
     default_device = 19709
     default_start = 5400
     default_salary = 1450
     default_tax = 750
-    default_bonus = 1500
+    default_bonus = 2850
     default_rent = 1250
-    # Настройка шагов кнопок +/- для РБ (пропорционально в целых числах)
-    step_price = 5
-    step_cost = 5
-    step_device = 1000
-    step_start = 300
-    step_salary = 100
-    step_tax = 50
+    step_price, step_cost, step_device, step_start, step_salary, step_tax = 5, 2, 1800, 360, 180, 36
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
 c_in1, c_in2, c_in3, c_in4 = st.columns(4)
 
@@ -121,7 +133,7 @@ with c_in1:
     price_face = st.slider(f"Цена Лицо/Тело ({currency_label})", min_value=int(default_price_face*0.5), max_value=int(default_price_face*2), value=default_price_face, step=step_price)
     clients_hair = st.slider("Волосы (процедур в день)", 0, 10, 3)
     price_hair = st.slider(f"Цена Волосы ({currency_label})", min_value=int(default_price_hair*0.5), max_value=int(default_price_hair*2), value=default_price_hair, step=step_price)
-    days = st.slider("Рабочих дней в мес.", 15, 30, 25)
+    days = st.slider("Рабочих дней в мес.", 15, 30, 22)
 
 with c_in2:
     st.markdown(f"<b style='color:#4A1A60;'>🧪 Себестоимость сеанса ({currency_label})</b>", unsafe_allow_html=True)
@@ -144,76 +156,55 @@ with c_in4:
     rent_and_other_input = st.number_input(f"Аренда и ОХР ({currency_label})", value=default_rent, step=step_salary)
 
 # --- МАТЕМАТИЧЕСКАЯ ЛОГИКА ---
-# Расчет аннуитетного платежа по лизингу
 if lease_rate > 0 and lease_months > 0:
     monthly_rate = (lease_rate / 100) / 12
     lease_payment = device_cost_input * (monthly_rate * (1 + monthly_rate)**lease_months) / ((1 + monthly_rate)**lease_months - 1)
 else:
     lease_payment = device_cost_input / lease_months if lease_months > 0 else 0
 
-# Выручка и переменные расходы в выбранной валюте (Исправление зависания данных)
 monthly_face_rev = clients_face * days * price_face
 monthly_hair_rev = clients_hair * days * price_hair
 total_revenue = monthly_face_rev + monthly_hair_rev
-
-# Раствор-активатор заложен внутри ползунков себестоимости по умолчанию
 total_variable_costs = (clients_face * days * (cost_face + manipula)) + (clients_hair * days * (cost_hair + manipula))
 total_fixed_costs_with_lease = lease_payment + salary_base_input + salary_tax_input + bonus_doctor_input + rent_and_other_input
 
-# --- МАТЕМАТИЧЕСКАЯ ЛОГИКА С НАЛОГОВЫМ ОЧИЩЕНИЕМ НДС (БЕЛАРУСЬ) ---
-profit_before_tax = total_revenue - total_variable_costs - total_fixed_costs_with_lease
-
+# Профессиональный бухгалтерский расчет НДС методом "В том числе" (Цена / 6) строго по вашему документу
 if currency_choice == "BYN (Беларусь)":
-    # 1. Выделяем исходящий НДС из выручки (НДС = Выручка * 20 / 120)
-    vat_output = total_revenue - (total_revenue / 1.20)
-    revenue_clear = total_revenue / 1.20
-    
-    # 2. Выделяем входящий НДС из переменных затрат на составы (НДС = Затраты * 20 / 120)
-    vat_input = total_variable_costs - (total_variable_costs / 1.20)
-    variable_costs_clear = total_variable_costs / 1.20
-    
-    # 3. Чистый НДС к уплате в бюджет (разница к уплате)
+    vat_output = total_revenue / 6
+    revenue_clear = total_revenue - vat_output
+    vat_input = total_variable_costs / 6
+    variable_costs_clear = total_variable_costs - vat_input
     vat_belarus = vat_output - vat_input if vat_output > vat_input else 0
     
-    # 4. Расчет чистой прибыли С ЛИЗИНГОМ на очищенной базе
-    # База для налога на прибыль (15%) = Очищенная выручка - Очищенные переменные косты - Фикс косты
+    # Налог на прибыль (20% или 0% в зависимости от выбора) на очищенной базе
     profit_clear_before_tax = revenue_clear - variable_costs_clear - total_fixed_costs_with_lease
-    tax = profit_clear_before_tax * 0.15 if profit_clear_before_tax > 0 else 0
+    tax = profit_clear_before_tax * tax_rate if profit_clear_before_tax > 0 else 0
     net_profit = profit_clear_before_tax - tax
     
-    # 5. Расчет чистой прибыли ПОСЛЕ ОКОНЧАНИЯ ЛИЗИНГА на очищенной базе
     fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
     profit_no_lease_clear_before_tax = revenue_clear - variable_costs_clear - fixed_costs_no_lease
-    tax_no_lease = profit_no_lease_clear_before_tax * 0.15 if profit_no_lease_clear_before_tax > 0 else 0
+    tax_no_lease = profit_no_lease_clear_before_tax * tax_rate if profit_no_lease_clear_before_tax > 0 else 0
     net_profit_after_lease = profit_no_lease_clear_before_tax - tax_no_lease
-
-    # Корректируем переменные затраты для круговой диаграммы, чтобы показать их без НДС
     total_variable_costs_for_pie = variable_costs_clear
 else:
-    # Стандартный расчет для России (без выделения НДС)
     vat_belarus = 0
-    tax = profit_before_tax * 0.15 if profit_before_tax > 0 else 0
+    profit_before_tax = total_revenue - total_variable_costs - total_fixed_costs_with_lease
+    tax = profit_before_tax * tax_rate if profit_before_tax > 0 else 0
     net_profit = profit_before_tax - tax
     
     fixed_costs_no_lease = total_fixed_costs_with_lease - lease_payment
     profit_no_lease_before_tax = total_revenue - total_variable_costs - fixed_costs_no_lease
-    tax_no_lease = profit_no_lease_before_tax * 0.15 if profit_no_lease_before_tax > 0 else 0
+    tax_no_lease = profit_no_lease_before_tax * tax_rate if profit_no_lease_before_tax > 0 else 0
     net_profit_after_lease = profit_no_lease_before_tax - tax_no_lease
-    
     total_variable_costs_for_pie = total_variable_costs
 
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 
-# Выравнивание и вывод финансовых блоков
 c_m1, c_m2, c_m3, c_m4 = st.columns(4)
 c_m1.metric("📌 Общая выручка комплекса", f"{total_revenue:,.0f} {currency_label}/мес.")
 c_m2.metric("📌 Платеж по лизингу", f"{lease_payment:,.0f} {currency_label}/мес.")
-if net_profit > 0:
-    c_m3.markdown(f"<div style='color:#005A36; font-size:12px; font-weight:600;'>🟢 Чистая прибыль (с лизингом)</div><div style='font-size:22px; font-weight:600; color:#005A36;'>{net_profit:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
-    c_m4.markdown(f"<div style='color:#005A36; font-size:12px; font-weight:600;'>🔥 Прибыль после лизинга</div><div style='font-size:22px; font-weight:600; color:#005A36;'>{net_profit_after_lease:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
-else:
-    c_m3.markdown(f"<div style='color:#b00020; font-size:12px; font-weight:600;'>🔴 Чистый убыток</div><div style='font-size:22px; font-weight:600; color:#b00020;'>{net_profit:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
-    c_m4.markdown(f"<div style='color:#b00020; font-size:12px; font-weight:600;'>🔴 Прибыль после лизинга</div><div style='font-size:22px; font-weight:600; color:#b00020;'>0 {currency_label}/мес.</div>", unsafe_allow_html=True)
+c_m3.markdown(f"<div style='color:#005A36; font-size:12px; font-weight:600;'>🟢 Чистая прибыль (с лизингом)</div><div style='font-size:22px; font-weight:600; color:#005A36;'>{net_profit:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
+c_m4.markdown(f"<div style='color:#005A36; font-size:12px; font-weight:600;'>🔥 Прибыль после лизинга</div><div style='font-size:22px; font-weight:600; color:#005A36;'>{net_profit_after_lease:,.0f} {currency_label}/мес.</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -223,18 +214,11 @@ with c_graph1:
     st.markdown("<b style='font-size:13px; color:#4A1A60; font-family:Inter;'>🪐 СТРУКТУРА РАСПРЕДЕЛЕНИЯ ВЫРУЧКИ</b>", unsafe_allow_html=True)
     if total_revenue > 0 and net_profit > 0:
         if currency_choice == "BYN (Беларусь)":
-            pie_data = pd.DataFrame({
-                "Категория": ["Чистая прибыль", "Переменные расходы (без НДС)", "Фикс. расходы и лизинг", "Налог на прибыль (15%)", "⚡ Чистый НДС в бюджет"],
-                "Сумма": [net_profit, total_variable_costs_for_pie, total_fixed_costs_with_lease, tax, vat_belarus]
-            })
+            pie_data = pd.DataFrame({"Категория": ["Чистая прибыль", "Переменные расходы (без НДС)", "Фикс. расходы и лизинг", f"Налог на прибыль ({int(tax_rate*100)}%)", "⚡ Чистый НДС в бюджет (20%)"], "Сумма": [net_profit, total_variable_costs_for_pie, total_fixed_costs_with_lease, tax, vat_belarus]})
             brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2', '#D4AF37']
         else:
-            pie_data = pd.DataFrame({
-                "Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", "Налог (15%)"],
-                "Сумма": [net_profit, total_variable_costs_for_pie, total_fixed_costs_with_lease, tax]
-            })
+            pie_data = pd.DataFrame({"Категория": ["Чистая прибыль", "Переменные расходы", "Фикс. расходы и лизинг", f"Налог на прибыль ({int(tax_rate*100)}%)"], "Сумма": [net_profit, total_variable_costs_for_pie, total_fixed_costs_with_lease, tax]})
             brand_luxury_colors = ['#006B44', '#005A36', '#1A1A1A', '#8E5EA2']
-            
         fig_pie = px.pie(pie_data, values="Сумма", names="Категория", color_discrete_sequence=brand_luxury_colors, hole=0.45)
         fig_pie.update_layout(margin=dict(t=5, b=5, l=0, r=0), height=170, showlegend=True)
         st.plotly_chart(fig_pie, use_container_width=True)
@@ -248,8 +232,12 @@ with c_graph2:
     current_balance = -initial_invest_input
     for m in range(1, 7):
         m_fixed = total_fixed_costs_with_lease if m <= lease_months else fixed_costs_no_lease
-        m_profit_before_tax = total_revenue - total_variable_costs - m_fixed
-        m_tax = m_profit_before_tax * 0.15 if m_profit_before_tax > 0 else 0
+        if currency_choice == "BYN (Беларусь)":
+            m_profit_before_tax = revenue_clear - variable_costs_clear - m_fixed
+            m_tax = m_profit_before_tax * tax_rate if m_profit_before_tax > 0 else 0
+        else:
+            m_profit_before_tax = total_revenue - total_variable_costs - m_fixed
+            m_tax = m_profit_before_tax * tax_rate if m_profit_before_tax > 0 else 0
         current_balance += (m_profit_before_tax - m_tax)
         cumulative_balances.append(current_balance)
     df_line = pd.DataFrame({"Баланс проекта": cumulative_balances}, index=months_list)
@@ -261,26 +249,17 @@ with c_graph2:
 st.markdown("<hr style='margin: 10px 0; border-color: #efefef;'>", unsafe_allow_html=True)
 st.markdown("<b style='font-size:14px; color:#4A1A60; font-family:Inter;'>⚖️ СРАВНИТЕЛЬНЫЙ АНАЛИЗ ЭФФЕКТИВНОСТИ ИСПОЛЬЗОВАНИЯ ИНФРАСТРУКТУРЫ САНАТОРИЯ</b>", unsafe_allow_html=True)
 
-# Расчет средних цен и себестоимостей ARESSAGE строго по формуле из вашего Excel (Исправление п.1)
-# Себестоимость Face в РФ = 3780 + 250 (манипула) + 1020 (раствор) = 5050 руб.
-# Себестоимость Hair в РФ = 4380 + 250 (манипула) + 1020 (раствор) = 5650 руб.
-# Средняя себестоимость для таблицы РФ = (5050 + 5650) / 2 = 5350 руб.
-# Средняя цена для таблицы РФ = (9300 + 11300) / 2 = 10300 руб.
+# Очищенная базовая калькуляция для сравнительной аналитики Москвы и Минска (Строго по ТЗ = 4575 руб)
 avg_price_rub = (9300 + 11300) / 2
-avg_cost_rub = 5350.0
+avg_cost_rub = 4575.0
 margin_rub = avg_price_rub - avg_cost_rub
 rev_per_min_rub = margin_rub / 30
 
-# Себестоимость Face в РБ = 166 + 11 (манипула) + 45 (раствор) = 222 Br
-# Себестоимость Hair в РБ = 192 + 11 (манипула) + 45 (раствор) = 248 Br
-# Средняя себестоимость для таблицы РБ = (222 + 248) / 2 = 235 Br
-# Средняя цена для таблицы РБ = (300 + 370) / 2 = 335 Br
-avg_price_byn = (300 + 370) / 2
-avg_cost_byn = 235.0
+avg_price_byn = (166 + 192) / 2
+avg_cost_byn = avg_cost_rub * 0.0359
 margin_byn = avg_price_byn - avg_cost_byn
 rev_per_min_byn = margin_byn / 30
 
-# Генерация кастомной HTML-матрицы с исправленным синтаксисом и точной математикой по ТЗ
 html_table = f"""
 <table class="luxury-table">
     <tr>
@@ -343,7 +322,6 @@ html_table = f"""
     </tr>
 </table>
 """
-
 st.markdown(html_table, unsafe_allow_html=True)
 
 st.markdown(f"""
